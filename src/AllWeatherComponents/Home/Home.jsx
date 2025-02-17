@@ -55,7 +55,7 @@ function Home() {
       cloudData(null)
     } else {
       const responses = await fetch(
-        `http://api.weatherapi.com/v1/current.json?key=df827ba81f1641a38c660925251602&q=${handel}&aqi=no`
+        `https://api.weatherapi.com/v1/current.json?key=df827ba81f1641a38c660925251602&q=${handel}&aqi=no`
       );
       const data = await responses.json();
       cloudData(data);
