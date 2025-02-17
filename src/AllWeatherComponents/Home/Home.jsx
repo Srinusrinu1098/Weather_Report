@@ -86,7 +86,7 @@ function Home() {
       close(false);
       if (handel) {
         const weatherResponse = await fetch(
-          `http://api.weatherapi.com/v1/current.json?key=df827ba81f1641a38c660925251602&q=${handel}&aqi=no`
+          `https://api.weatherapi.com/v1/current.json?key=df827ba81f1641a38c660925251602&q=${handel}&aqi=no`
         );
         const weatherData = await weatherResponse.json();
         cloudData(weatherData);
