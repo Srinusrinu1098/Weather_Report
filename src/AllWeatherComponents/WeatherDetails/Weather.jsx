@@ -7,6 +7,8 @@ import { Link } from "react-router-dom";
 
 const WeatherCard = (props) => {
     const {weather} = props
+   
+    
   return (
     <>
     <div className="flex items-center justify-center lg:hidden ">

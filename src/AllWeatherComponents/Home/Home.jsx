@@ -23,17 +23,18 @@ function Home() {
   const [clouds, cloudData] = useState(null);
   const [bool, bools] = useState(false);
   const [open, close] = useState(false);
-  const [noError, error] = useState(false);
+  
   const [handel, handelEvents] = useState("");
 
   const fetchPlaces = async (input) => {
     const API_KEY = import.meta.env.VITE_GOOGLE_PLACE_APIKEY;
-    const url = `https://maps.gomaps.pro/maps/api/place/autocomplete/json?input=${input}&key=${API_KEY}`;
+    const url = `https://nominatim.openstreetmap.org/search?q=${handel}&format=json&limit=5
+`;
 
     try {
       const response = await fetch(url);
       const data = await response.json();
-      setSuggestions(data.predictions || []);
+      setSuggestions(data || []);
     } catch (error) {
       console.error("Error fetching places:", error);
     }
@@ -44,25 +45,36 @@ function Home() {
     }, [clouds]);
 
   const submitTheDetails = async (event) => {
-    event.preventDefault();
-    const user = localStorage.getItem("user");
-    if (!handel) {
-      return toast("fill the input box");
-    }
-    console.log(user);
-    if (!user) {
-      close(true);
-      cloudData(null)
-    } else {
-      const responses = await fetch(
+  event.preventDefault();
+  const user = localStorage.getItem("user");
+  
+  if (!handel) {
+    return toast.error("⚠️ Please enter a valid location!");
+  }
+  
+  if (!user) {
+    close(true);
+    cloudData(null);
+  } else {
+    try {
+      const response = await fetch(
         `http://api.weatherapi.com/v1/current.json?key=df827ba81f1641a38c660925251602&q=${handel}&aqi=no`
       );
-      const data = await responses.json();
-      cloudData(data);
-      
+      const data = await response.json();
 
+      if (response.ok && data.location) {
+        cloudData(data); // ✅ Update weather data only if valid
+      } else {
+        cloudData(null);
+        toast("❌ Invalid location. Please enter a correct place!");
+      }
+    } catch (error) {
+      cloudData(null);
+      toast.error("🚨 Error fetching weather data. Try again later!");
     }
-  };
+  }
+};
+
 
   const getLogedin = useGoogleLogin({
     onSuccess: (resp) => SaveUserInfo(resp),
@@ -70,32 +82,42 @@ function Home() {
   });
 
   const SaveUserInfo = async (token) => {
-    const url = `https://www.googleapis.com/oauth2/v1/userinfo?acess_token=${token.access_token}`;
-    const options = {
-      headers: {
-        Authorization: `Bearer ${token.access_token}`,
-        Accept: "application/json",
-      },
-    };
+  const url = `https://www.googleapis.com/oauth2/v1/userinfo?access_token=${token.access_token}`;
+  const options = {
+    headers: {
+      Authorization: `Bearer ${token.access_token}`,
+      Accept: "application/json",
+    },
+  };
 
-    const response = await fetch(url, options);
-    const data = await response.json();
-    if (response.ok) {
-      
-      localStorage.setItem("user", JSON.stringify(data));
-      close(false);
-      if (handel) {
+  const response = await fetch(url, options);
+  const data = await response.json();
+
+  if (response.ok) {
+    localStorage.setItem("user", JSON.stringify(data));
+    close(false);
+
+    if (handel) {
+      try {
         const weatherResponse = await fetch(
           `http://api.weatherapi.com/v1/current.json?key=df827ba81f1641a38c660925251602&q=${handel}&aqi=no`
         );
         const weatherData = await weatherResponse.json();
-        cloudData(weatherData);
-        console.log("working", weatherData); // ✅ Immediately logs data
-      } else {
-        console.log("No search query found after login.");
+
+        if (weatherResponse.ok && weatherData.location) {
+          cloudData(weatherData);
+        } else {
+          cancelButton.error("❌ Invalid location. Please enter a correct place!");
+          cloudData(null);
+        }
+      } catch (error) {
+        toast("🚨 Error fetching weather data. Try again later!");
+        cloudData(null);
       }
     }
-  };
+  }
+};
+
 
   return (
     <div className="">
@@ -131,11 +153,11 @@ function Home() {
                   <li
                     key={place.place_id}
                     onClick={() => {
-                      handelEvents(place.description), bools(false);
+                      handelEvents(place.display_name), bools(false);
                     }}
                     className="cursor-pointer truncate w-full"
                   >
-                    {place.description}
+                    {place.display_name}
                   </li>
                 ))}
             </ul>
@@ -167,13 +189,14 @@ function Home() {
             </DialogHeader>
           </DialogContent>
         </Dialog>
-        {clouds && (
+        {clouds !== null  && (
           <>
             <WeatherCard weather={clouds} />
           </>
         )}
+        
 
-        {console.log(clouds)}
+        
       </div>
     </div>
   );
