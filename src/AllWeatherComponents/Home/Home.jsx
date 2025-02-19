@@ -28,8 +28,7 @@ function Home() {
 
   const fetchPlaces = async (input) => {
     const API_KEY = import.meta.env.VITE_GOOGLE_PLACE_APIKEY;
-    const url = `https://nominatim.openstreetmap.org/search?q=${handel}&format=json&limit=5
-`;
+    const url = `https://nominatim.openstreetmap.org/search?q=${input}&format=json&limit=5`;
 
     try {
       const response = await fetch(url);
